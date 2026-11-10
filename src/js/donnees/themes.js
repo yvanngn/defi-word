@@ -17,11 +17,11 @@ const SEM_POOL=ALLWORDS.filter(w=>w.length>=3&&w.length<=12);
 // Boggle : mots de 4 à 6 lettres (lexique thématique + réserve courante)
 const BOGGLE_POOL=[...new Set([...ALLWORDS.filter(w=>w.length>=4&&w.length<=6&&!BOGGLE_EXCLUDE.has(w)).map(w=>w.toUpperCase()),...WORDLE.filter(w=>w.length>=4&&w.length<=6)])];
 
-const GAMES=[
- {name:"Wordle",pts:15,c:"var(--green)",rule:"Un mot de 4 à 6 lettres en 6 essais."},
- {name:"Boggle",pts:15,c:"var(--blue)",rule:"Relie des lettres voisines pour former le mot caché."},
- {name:"Sémantix",pts:15,c:"var(--pink)",rule:"Trouve le mot secret grâce à la température des mots."},
- {name:"Calcul",pts:10,c:"var(--sun)",rule:"5 calculs de tête, 2 points chacun.",sun:true}
-];
-const MAX=GAMES.reduce((s,g)=>s+g.pts,0);
-
+// Catalogue des épreuves (l'admin choisit lesquelles, dans quel ordre et pour combien de points : moteur/config.js)
+const CATALOGUE={
+ wordle:{name:"Wordle",pts:15,c:"var(--green)",rule:"Un mot de 4 à 6 lettres en 6 essais.",mount:(e,p,n)=>mountWordle(e,p,n),sol:p=>p.wordle},
+ boggle:{name:"Boggle",pts:15,c:"var(--blue)",rule:"Relie des lettres voisines pour former le mot caché.",mount:(e,p,n)=>mountBoggle(e,p,n),sol:p=>p.boggle},
+ semantix:{name:"Sémantix",pts:15,c:"var(--pink)",rule:"Trouve le mot secret grâce à la température des mots.",mount:(e,p,n)=>mountSemantix(e,p,n),sol:p=>p.sem.toUpperCase()},
+ pendu:{name:"Pendu",pts:15,c:"#8B5CF6",rule:"Devine le mot lettre par lettre, 7 erreurs maximum (chaque erreur coûte des points).",mount:(e,p,n)=>mountPendu(e,p,n),sol:p=>(p.pendu||"").toUpperCase()},
+ calcul:{name:"Calcul",pts:10,c:"var(--sun)",rule:"5 calculs de tête, points partagés entre les bonnes réponses.",sun:true,mount:(e,p,n)=>mountCalcul(e,p,n),sol:p=>p.quiz.map(q=>q.a).join(", ")}
+};

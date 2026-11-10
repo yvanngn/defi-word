@@ -1,5 +1,5 @@
 /* ================= 3. Sémantix simplifié ================= */
-function mountSemantix(el,P){
+function mountSemantix(el,P,PTS){
   const secret=P.sem;
   const guesses=(P.hints||[]).map(w=>({w,t:temperature(secret,w),hint:true}));
   let last=null,locked=false;
@@ -17,7 +17,7 @@ function mountSemantix(el,P){
     if(g.length<2){msg("Tape un mot","ko");return;}
     if(guesses.some(x=>x.w===g)){last=g;draw();msg("Déjà proposé");return;}
     if(g!==secret&&DICT&&!DICT.has(g)&&!LEX.has(g)&&!HEAD.has(g)){msg("Ce mot n’est pas dans le dictionnaire","ko");return;}
-    if(g===secret||g===secret+"s"||g===secret+"x"){guesses.push({w:secret,t:100});last=secret;draw();locked=true;msg(`C’est « ${secret} » ! +15`,"ok");later(()=>advance(15),1300);return;}
+    if(g===secret||g===secret+"s"||g===secret+"x"){guesses.push({w:secret,t:100});last=secret;draw();locked=true;msg(`C’est « ${secret} » ! +${PTS}`,"ok");later(()=>advance(PTS),1300);return;}
     const t=temperature(secret,g);guesses.push({w:g,t});last=g;draw();
     msg(t>=75?"Brûlant !":t>=50?"Chaud":t>=28?"Tiède":"Glacial");inp.focus();
   };

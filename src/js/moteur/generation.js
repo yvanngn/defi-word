@@ -48,8 +48,10 @@ function semHints(secret){
   return out;
 }
 // Choisit des énigmes jamais jouées (en mémoire dans meta/used), puis remet à zéro une catégorie épuisée
+// Pendu : mots du lexique de 5 à 10 lettres (sans mots composés)
+const PENDU_POOL=ALLWORDS.filter(w=>w.length>=5&&w.length<=10&&!BOGGLE_EXCLUDE.has(w)&&!["chefdoeuvre","petitdejeuner","jeuvideo"].includes(w));
 function generatePuzzles(used){
-  used={wordle:[],boggle:[],semantix:[],...(used||{})};
+  used={wordle:[],boggle:[],semantix:[],pendu:[],...(used||{})};
   const take=(pool,key,avoid)=>{
     const seen=new Set(used[key]);
     let avail=pool.filter(w=>!seen.has(w)&&!avoid.has(w));
@@ -66,6 +68,8 @@ function generatePuzzles(used){
   for(const L of shuffle([4,5,6])){const avail=WORDLE.filter(w=>w.length===L&&!seenW.has(w)&&!avoid.has(w));if(avail.length){wordle=pickOne(avail);break;}}
   if(!wordle){used.wordle=[];wordle=pickOne(WORDLE.filter(w=>w.length<=6&&!avoid.has(w)));}
   used.wordle=[...used.wordle,wordle];
-  return {puzzle:{wordle,boggle,grid,sem,hints:semHints(sem),quiz:buildQuiz()},used};
+  avoid.add(wordle.toLowerCase());
+  const pendu=take(PENDU_POOL,"pendu",avoid);
+  return {puzzle:{wordle,boggle,grid,sem,hints:semHints(sem),quiz:buildQuiz(),pendu},used};
 }
 

@@ -38,8 +38,8 @@ async function launch(){
     const {puzzle,used:nu}=generatePuzzles(used);
     const number=(nu.count||0)+1;
     const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-    await db.doc("meta/used").set({wordle:nu.wordle,boggle:nu.boggle,semantix:nu.semantix,count:number});
-    await db.doc("game/current").set({id,number,status:"running",startedAt:Date.now(),...puzzle});
+    await db.doc("meta/used").set({wordle:nu.wordle,boggle:nu.boggle,semantix:nu.semantix,pendu:nu.pendu,count:number});
+    await db.doc("game/current").set({id,number,status:"running",startedAt:Date.now(),...puzzle,cfg:cfgNorm(cfg)});
   }catch(e){alert("Impossible de lancer la partie : "+(e.message||e.code||"erreur"));}
   launching=false;
 }
@@ -51,16 +51,16 @@ function checkFinish(){
   if(!isAdmin||!game||game.status!=="running"||finalizing)return;
   const age=(Date.now()-game.startedAt)/1000;
   const allDone=age>6&&liveRows.length>0&&liveRows.every(r=>r.done);
-  if(allDone||age>TOTAL+GRACE)finalize(game);
+  if(allDone||age>cfgNorm(game.cfg).temps+GRACE)finalize(game);
 }
 async function finalize(g){
   finalizing=true;
   try{
     const snap=await db.collection("live").where("gameId","==",g.id).get();
     const rows=snap.docs.map(d=>({uid:d.id,...d.data()})).sort(rankSort);
-    const standings=rows.map(r=>({uid:r.uid,pseudo:r.pseudo||"Joueur",total:r.total||0,bonus:r.bonus||0,time:r.time||TOTAL,scores:r.scores||[0,0,0,0]}));
+    const standings=rows.map(r=>({uid:r.uid,pseudo:r.pseudo||"Joueur",total:r.total||0,bonus:r.bonus||0,time:r.time||cfgNorm(g.cfg).temps,scores:r.scores||[]}));
     const endedAt=Date.now();
-    await db.doc("games/"+g.id).set({id:g.id,number:g.number,startedAt:g.startedAt,endedAt,standings,answers:{wordle:g.wordle,boggle:g.boggle,sem:g.sem}});
+    await db.doc("games/"+g.id).set({id:g.id,number:g.number,startedAt:g.startedAt,endedAt,standings,answers:Object.fromEntries(cfgNorm(g.cfg).jeux.filter(id=>id!=="calcul").map(id=>[id,CATALOGUE[id].sol(g)]))});
     let st=null;try{const s=await db.doc("stats/main").get();st=s.exists?s.data():null;}catch{}
     st=st||{games:0,players:{},best:null};
     st.players=st.players||{};

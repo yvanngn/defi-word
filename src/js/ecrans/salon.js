@@ -8,9 +8,10 @@ function render(){
   if(screen==="offline")return renderOffline();
   if(screen==="play")return renderPlay();
   if(screen==="end")return renderEnd();
+  if(screen==="config")return renderConfig();
 }
 function renderPseudo(){
-  app.innerHTML=`${logo()}<p class="tag">3 minutes, 4 épreuves, un seul gagnant.</p>
+  app.innerHTML=`${logo()}<p class="tag">${dureeTxt(cfg.temps)}, ${cfg.jeux.length} épreuve${cfg.jeux.length>1?"s":""}, un seul gagnant.</p>
   <div class="card"><h2>Choisis ton pseudo</h2>
   <form class="inrow" id="pf"><input class="input" id="pi" maxlength="18" autocomplete="nickname" placeholder="Ton pseudo" value="${esc(pseudo)}" aria-label="Pseudo"><button class="btn" style="--c:var(--green)">Entrer</button></form>
   <p class="muted" id="perr" style="margin:10px 0 0">Il s’affichera dans le salon et au classement.</p></div>`;
@@ -27,10 +28,15 @@ function renderOffline(){
   app.innerHTML=`${logo()}<p class="tag">Mode solo</p>
   <div class="card"><p style="margin-top:0">Le salon multijoueur n’est pas disponible dans cette vue : ouvre le jeu depuis son lien claude.ai en étant connecté. En attendant, tu peux t’entraîner seul (hors classement).</p>
   <button class="btn big" id="solo" style="--c:var(--green)">Jouer en solo</button></div>
-  <div class="card">${stepsHtml()}</div>`;
-  $("#solo").onclick=()=>{const {puzzle}=generatePuzzles(null);beginRound({id:"solo-"+Date.now(),number:0,startedAt:Date.now(),...puzzle});};
+  <div class="card"><h2>Au programme <small>${maxDe(cfg)} pts max, ${dureeTxt(cfg.temps)}</small></h2>${stepsHtml()}<button class="btn ghost small" id="reglages" style="margin-top:10px">⚙ Réglages</button></div>`;
+  $("#reglages").onclick=()=>{screen="config";render();};
+  $("#solo").onclick=()=>{const {puzzle}=generatePuzzles(null);beginRound({id:"solo-"+Date.now(),number:0,startedAt:Date.now(),...puzzle,cfg});};
 }
-function stepsHtml(){return `<ol class="steps">${GAMES.map((g,i)=>`<li><span class="num ${g.sun?"sun":""}" style="--c:${g.c}">${i+1}</span><span><b>${g.name}</b><small>${g.rule}</small></span><span class="pts">${g.pts} pts</span></li>`).join("")}<li><span class="num" style="--c:var(--ink);color:var(--bg)">⏱</span><span><b>Bonus temps</b><small>Finis en avance : 1 pt par tranche de 10 s restantes, proportionnel à tes points.</small></span><span class="pts">bonus</span></li></ol>`;}
+function stepsHtml(){
+  const c=cfgNorm(cfg),bt=c.bonusTemps?`<li><span class="num" style="--c:var(--ink);color:var(--bg)">⏱</span><span><b>Bonus temps</b><small>Finis en avance : 1 pt par tranche de ${c.bonusPas} s restantes, proportionnel à tes points.</small></span><span class="pts">bonus</span></li>`:"";
+  const bp=c.bonusParfait?`<li><span class="num" style="--c:var(--ink);color:var(--bg)">★</span><span><b>Bonus sans-faute</b><small>Toutes les épreuves réussies au maximum.</small></span><span class="pts">+${c.bonusParfait} pts</span></li>`:"";
+  return `<ol class="steps">${jeuxDe(c).map((g,i)=>`<li><span class="num ${g.sun?"sun":""}" style="--c:${g.c}">${i+1}</span><span><b>${g.name}</b><small>${g.rule}</small></span><span class="pts">${g.pts} pts</span></li>`).join("")}${bt}${bp}</ol>`;
+}
 
 /* ================= Salon ================= */
 function renderLobby(){
@@ -38,13 +44,14 @@ function renderLobby(){
   <div class="card" id="running" hidden></div>
   <div class="card"><h2>Salon <small id="pcount"></small></h2><ul class="people" id="people"></ul>
     <div class="lobby-actions" id="actions"></div></div>
-  <div class="card"><h2>Au programme <small>${MAX} pts max</small></h2>${stepsHtml()}</div>
+  <div class="card"><h2>Au programme <small>${maxDe(cfg)} pts max, ${dureeTxt(cfg.temps)}</small></h2>${stepsHtml()}${isAdmin?`<button class="btn ghost small" id="reglages" style="margin-top:10px">⚙ Réglages de la partie</button>`:""}</div>
   <div class="card"><div class="tabs" role="tablist">
     <button class="tab" role="tab" data-t="records" aria-selected="${tab==="records"}">Records</button>
     <button class="tab" role="tab" data-t="history" aria-selected="${tab==="history"}">Dernières parties</button></div>
     <div id="tabbody"></div></div>
   <p class="muted center" id="admininfo"></p>`;
   $("#chg").onclick=()=>{screen="pseudo";render();};
+  if($("#reglages"))$("#reglages").onclick=()=>{screen="config";render();};
   app.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.t;app.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));renderTabs();});
   renderPeople();renderActions();renderRunning();renderTabs();renderAdminInfo();
 }
@@ -84,10 +91,10 @@ function renderRunning(){
 }
 function standingsHtml(rows,final){
   if(!rows.length)return `<p class="empty">Aucun joueur pour l’instant.</p>`;
-  let rank=0;
+  let rank=0;const nbJ=cfgNorm(game?.cfg).jeux.length;
   return `<ol class="rank-list">${rows.map(r=>{if(r.done||final)rank++;const fin=r.done||final;
     return `<li class="${r.uid===uid?"me":""}"><span class="rk">${fin?(rank===1?"🏆":rank):"…"}</span>${avatar(r.uid,r.pseudo)}
-    <span class="nm">${esc(r.pseudo||"Joueur")}${r.uid===uid?" (toi)":""}<small>${fin?`en ${fmt(r.time)}${r.bonus?`, bonus +${r.bonus}`:""}`:`épreuve ${Math.min((r.step||0)+1,4)} sur 4`}</small></span>
+    <span class="nm">${esc(r.pseudo||"Joueur")}${r.uid===uid?" (toi)":""}<small>${fin?`en ${fmt(r.time)}${r.bonus?`, bonus +${r.bonus}`:""}`:`épreuve ${Math.min((r.step||0)+1,nbJ)} sur ${nbJ}`}</small></span>
     <span class="sc">${r.total||0}</span></li>`;}).join("")}</ol>`;
 }
 function renderTabs(){
@@ -107,13 +114,13 @@ function renderTabs(){
     el.innerHTML=`<ul class="history">${history.map(g=>{const s=g.standings||[];
       return `<li><b>Partie n°${g.number}</b> <span class="muted">${dateFr(g.endedAt)}, ${s.length} joueur${s.length>1?"s":""}</span>
       <span class="podium">${s.slice(0,3).map((r,i)=>`${["🥇","🥈","🥉"][i]} ${esc(r.pseudo)} ${r.total}`).join("&nbsp;&nbsp; ")||"Personne n’a joué"}</span>
-      <span class="podium muted">Réponses : ${esc(g.answers?.wordle)}, ${esc(g.answers?.boggle)}, ${esc((g.answers?.sem||"").toUpperCase())}</span></li>`;}).join("")}</ul>`;
+      <span class="podium muted">Réponses : ${esc(Object.values(g.answers||{}).filter(Boolean).map(x=>String(x).toUpperCase()).join(", "))}</span></li>`;}).join("")}</ul>`;
   }
 }
 function renderAdminInfo(){
   const el=$("#admininfo");if(!el||!isAdmin)return;
   const u=usedMeta||{wordle:[],boggle:[],semantix:[]};
-  const left=Math.min(WORDLE.filter(w=>w.length<=6).length-(u.wordle||[]).length,BOGGLE_POOL.length-(u.boggle||[]).length,SEM_POOL.length-(u.semantix||[]).length);
+  const left=Math.min(WORDLE.filter(w=>w.length<=6).length-(u.wordle||[]).length,BOGGLE_POOL.length-(u.boggle||[]).length,SEM_POOL.length-(u.semantix||[]).length,PENDU_POOL.length-(u.pendu||[]).length);
   el.textContent=`Tu es admin. Encore ${left} parties avant qu’un mot déjà joué puisse revenir (calculs et grilles toujours inédits).`;
 }
 

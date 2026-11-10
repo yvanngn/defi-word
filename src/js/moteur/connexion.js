@@ -17,12 +17,13 @@ async function init(){
       room.onPeers(ch=>{peers=ch.peers;if(screen==="lobby")renderPeople();});
       setPresence();
     }
+    db.doc("config/main").onSnapshot(s=>{if(screen!=="config"){cfg=cfgNorm(s.exists?s.data():null);if(screen==="lobby"||screen==="pseudo")render();}},()=>{});
     db.doc("game/current").onSnapshot(s=>onGame(s.exists?s.data():null),()=>{});
     db.doc("stats/main").onSnapshot(s=>{stats=s.exists?s.data():null;if(screen==="lobby")renderTabs();},()=>{});
     db.collection("games").orderBy("endedAt","desc").limit(15).onSnapshot(s=>{history=s.docs.map(d=>d.data());if(screen==="lobby")renderTabs();},()=>{});
     if(isAdmin)db.doc("meta/used").onSnapshot(s=>{usedMeta=s.exists?s.data():null;if(screen==="lobby")renderAdminInfo();},()=>{});
   }catch{clearTimeout(guard);offline();}
 }
-function offline(){db=null;solo=true;screen="offline";render();}
+function offline(){db=null;solo=true;chargerCfgSolo();screen="offline";render();}
 function setPresence(){if(room&&pseudo)room.presence({pseudo,ready,state:screen==="play"?"play":"lobby"}).catch(()=>{});}
 

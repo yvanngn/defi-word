@@ -12,6 +12,10 @@ const recKey=id=>"defi:round:"+id;
 function saveRound(){if(round)try{localStorage.setItem(recKey(round.id),JSON.stringify(round.st));}catch{}}
 function loadRound(id){try{return JSON.parse(localStorage.getItem(recKey(id)));}catch{return null;}}
 const total=()=>round?round.st.scores.reduce((a,b)=>a+b,0)+(round.st.bonus||0):0;
-// Bonus temps : 1 pt par tranche de 10 s restantes, proportionnel aux points gagnés (passer les épreuves ne rapporte rien)
-function timeBonus(st){const base=st.scores.reduce((a,b)=>a+b,0);const rem=Math.max(0,TOTAL-(st.time||TOTAL));return Math.round(rem/10*base/MAX);}
-
+// Bonus : temps (1 pt par tranche de bonusPas s restantes, proportionnel aux points gagnés) + sans-faute (toutes les épreuves au maximum)
+function bonusDe(st,c){
+  const base=st.scores.reduce((a,b)=>a+b,0),max=maxDe(c),rem=Math.max(0,c.temps-(st.time||c.temps));
+  const temps=c.bonusTemps&&max?Math.round(rem/c.bonusPas*base/max):0;
+  const parfait=c.jeux.every((id,i)=>st.scores[i]>=c.pts[id])?c.bonusParfait:0;
+  return {temps,parfait};
+}

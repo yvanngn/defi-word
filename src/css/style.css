@@ -163,3 +163,18 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-o
 @keyframes floatup{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-28px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.key{height:46px;font-size:.95rem}.glist li{grid-template-columns:1fr 60px 52px 22px}}
+/* Pendu */
+.gibet{display:block;width:150px;height:auto;margin:0 auto 6px;stroke:var(--ink);stroke-width:4;stroke-linecap:round;fill:none}
+.pmot{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:8px 0}
+.pl{width:28px;height:38px;border-bottom:4px solid var(--line);font-family:Fredoka,sans-serif;font-weight:700;font-size:1.5rem;text-align:center;line-height:38px}
+.pl.on{border-color:#8B5CF6}
+/* Réglages */
+.cfg h2{margin-top:18px}.cfg h2:first-child{margin-top:0}
+.cfg-jeux{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cfg-jeux li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;border-left:6px solid var(--c);background:var(--bg)}
+.cfg-jeux .chk{flex:1;min-width:0}
+.cfg-ord{display:flex;gap:4px}.key.mini{width:34px;height:34px;flex:none;font-size:.95rem}
+.cfg .input[type=number]{width:72px;padding:8px;text-align:center}
+.cfg-pts{white-space:nowrap}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;flex-wrap:wrap}
+.chk input{width:20px;height:20px;vertical-align:-4px;accent-color:var(--green)}

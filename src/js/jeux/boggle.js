@@ -1,5 +1,5 @@
 /* ================= 2. Boggle ================= */
-function mountBoggle(el,P){
+function mountBoggle(el,P,PTS){
   const T=P.boggle,G=[...P.grid];
   let sel=[],dragging=false,moved=false,locked=false,fails=0;
   // Case de départ d'un chemin valide pour le mot (sert à l'unique indice)
@@ -26,11 +26,11 @@ function mountBoggle(el,P){
   const check=()=>{
     if(locked||!sel.length)return;
     const w=sel.map(i=>G[i]).join("");
-    if(w===T){locked=true;sel.forEach(i=>cells[i].classList.add("win"));msg("Trouvé ! +15","ok");later(()=>advance(15),1100);}
+    if(w===T){locked=true;sel.forEach(i=>cells[i].classList.add("win"));msg("Trouvé ! +"+PTS,"ok");later(()=>advance(PTS),1100);}
     else{
       if(w.length===T.length)fails++;
       if(fails===2){const c=startCell();if(c>=0)cells[c].classList.add("hint");msg("Indice : le mot commence par la lettre entourée");}
-      else msg(w.length<T.length?`Il faut ${T.length} lettres`:"Pas le bon mot, essaie encore","ko");const g=$("#bg");g.classList.remove("shake");void g.offsetWidth;g.classList.add("shake");setTimeout(()=>{if(!locked){sel=[];draw();}},350);}
+      else msg(w.length<T.length?`Il faut ${T.length} lettres`:"Pas le bon mot, essaie encore","ko");const g=$("#bg");g.classList.remove("shake");void g.offsetWidth;g.classList.add("shake");setTimeout(()=>{if(!locked&&el.isConnected&&$("#bw")){sel=[];draw();}},350);}
   };
   const grid=$("#bg");
   grid.addEventListener("pointerdown",e=>{

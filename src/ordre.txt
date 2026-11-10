@@ -5,6 +5,7 @@ js/donnees/wordle.js
 js/donnees/dictionnaire.js
 js/donnees/themes.js
 js/moteur/outils.js
+js/moteur/config.js
 js/moteur/generation.js
 js/moteur/temperature.js
 js/moteur/etat.js
@@ -16,4 +17,5 @@ js/jeux/wordle.js
 js/jeux/boggle.js
 js/jeux/semantix.js
 js/jeux/calcul.js
+js/jeux/pendu.js
 js/clavier.js

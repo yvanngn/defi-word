@@ -20,7 +20,7 @@ tests/scenarios.py    tests Playwright
 
 ## Commandes
 - `python3 build.py` : génère `dist/index.html` (ne jamais l'éditer à la main).
-- `sh tester.sh` : build + tous les tests ; `sh tester.sh solo` pour un groupe (`donnees solo epreuves mobile`).
+- `sh tester.sh` : build + tous les tests ; `sh tester.sh solo` pour un groupe (`donnees solo epreuves reglages admin mobile`).
 
 ## Déploiement
 Push sur `main` → GitHub Actions : tests, puis publication de `dist/` sur GitHub Pages

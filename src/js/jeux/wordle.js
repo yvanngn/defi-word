@@ -1,5 +1,5 @@
 /* ================= 1. Wordle ================= */
-function mountWordle(el,P){
+function mountWordle(el,P,PTS){
   const T=P.wordle,N=T.length,KB=["AZERTYUIOP","QSDFGHJKLM","↵WXCVBN⌫"];
   let row=0,cur="",locked=false;const keys={};
   const size=`min(${N<=5?"15vw":`calc((100vw - 40px) / ${N} - 6px)`},${N<=5?58:N<=7?50:42}px)`;
@@ -20,7 +20,7 @@ function mountWordle(el,P){
     const rank={absent:1,present:2,correct:3};
     [...cur].forEach((ch,i)=>{if(!keys[ch]||rank[res[i]]>rank[keys[ch]])keys[ch]=res[i];});
     setTimeout(()=>el.querySelectorAll(".key").forEach(b=>{const s=keys[b.dataset.k];b.classList.remove("correct","present","absent");if(s)b.classList.add(s);}),N*70+100);
-    if(cur===T){locked=true;msg("Bravo ! +15","ok");later(()=>advance(15),1100);return;}
+    if(cur===T){locked=true;msg("Bravo ! +"+PTS,"ok");later(()=>advance(PTS),1100);return;}
     row++;cur="";msg("");
     if(row===6){locked=true;msg(`C’était ${T}`,"ko");later(()=>advance(0),1600);}
   };
