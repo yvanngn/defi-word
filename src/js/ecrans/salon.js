@@ -49,7 +49,10 @@ function renderLobby(){
     <button class="tab" role="tab" data-t="records" aria-selected="${tab==="records"}">Records</button>
     <button class="tab" role="tab" data-t="history" aria-selected="${tab==="history"}">Dernières parties</button></div>
     <div id="tabbody"></div></div>
-  <p class="muted center" id="admininfo"></p>`;
+  <p class="muted center" id="admininfo"></p>
+  ${enLigne&&!isAdmin?`<form class="center adm" id="adm"><button type="button" class="link" id="admo">Je suis l’admin</button><span id="admz" hidden><input class="input" type="password" id="admp" placeholder="Mot de passe admin" autocomplete="current-password"> <button class="btn small">Valider</button> <span class="msg ko" id="admm"></span></span></form>`:""}`;
+  if($("#adm")){$("#admo").onclick=()=>{$("#admo").hidden=true;$("#admz").hidden=false;$("#admp").focus();};
+    $("#adm").onsubmit=async e=>{e.preventDefault();const m=await devenirAdmin($("#admp").value).catch(()=>"Connexion impossible.");if(m)$("#admm").textContent=m;else render();};}
   $("#chg").onclick=()=>{screen="pseudo";render();};
   if($("#reglages"))$("#reglages").onclick=()=>{screen="config";render();};
   app.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.t;app.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));renderTabs();});

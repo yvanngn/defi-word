@@ -9,6 +9,7 @@ js/moteur/config.js
 js/moteur/generation.js
 js/moteur/temperature.js
 js/moteur/etat.js
+js/moteur/enligne.js
 js/moteur/connexion.js
 js/moteur/partie.js
 js/ecrans/salon.js

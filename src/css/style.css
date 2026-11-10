@@ -178,3 +178,5 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-o
 .cfg-pts{white-space:nowrap}
 .cfg-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;flex-wrap:wrap}
 .chk input{width:20px;height:20px;vertical-align:-4px;accent-color:var(--green)}
+/* Accès admin (mode en ligne) */
+.adm{margin:6px 0 0}.adm .input{width:auto;max-width:190px;display:inline-block;padding:8px 10px}

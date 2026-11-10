@@ -1,10 +1,12 @@
 /* ================= Connexion aux capacités ================= */
 async function init(){
   render();
-  if(!(window.claude&&window.claude.use)){offline();return;}
+  const claude=!!(window.claude&&window.claude.use);
+  if(!claude&&!supaOn()){offline();return;}
   const guard=setTimeout(()=>{if(!db)offline();},10000);
   try{
-    [db,user,room]=await Promise.all([window.claude.use("db"),window.claude.use("user"),window.claude.use("room")]);
+    if(claude)[db,user,room]=await Promise.all([window.claude.use("db"),window.claude.use("user"),window.claude.use("room")]);
+    else await initSupa();
     clearTimeout(guard);
     if(!db||!user){offline();return;}
     uid=await user.id();

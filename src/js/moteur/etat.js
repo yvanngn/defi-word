@@ -1,5 +1,5 @@
 /* ================= État ================= */
-let db=null,user=null,room=null,uid=null,isAdmin=false,canWrite=true;
+let db=null,user=null,room=null,uid=null,isAdmin=false,canWrite=true,enLigne=false;
 let pseudo=localStorage.getItem("defi:pseudo")||"";
 let ready=false, screen="loading";
 let game=null, firstGameSnap=true, peers=[], liveRows=[], liveFor=null, liveUnsub=null;

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests du « Défi » : rejoue le jeu dans un vrai navigateur (Chromium via Playwright).
 Usage : python3 tests/scenarios.py [groupe…]   (après python3 build.py)
-Groupes : donnees solo epreuves reglages admin mobile. Code de sortie 0 si tout passe, 1 sinon."""
+Groupes : donnees solo epreuves reglages admin enligne mobile. Code de sortie 0 si tout passe, 1 sinon."""
 import asyncio, os, sys
 from playwright.async_api import async_playwright
 
@@ -256,7 +256,90 @@ async def admin(nav):
     verif(err == [], 'aucune erreur JS ' + str(err))
     await ctx.close()
 
-GROUPES = {'donnees': donnees, 'solo': solo, 'epreuves': epreuves, 'reglages': reglages, 'admin': admin, 'mobile': mobile}
+# ---------- Faux Supabase (PostgREST minimal, en mémoire) pour le mode en ligne ----------
+import json, datetime, urllib.parse
+SITE = 'http://localhost:8765/'  # localhost = contexte sécurisé (WebCrypto), comme https
+
+class FauxSupa:
+    def __init__(self): self.rows = {}; self.n = 0
+    def maj(self):
+        self.n += 1
+        return (datetime.datetime(2026, 1, 1) + datetime.timedelta(milliseconds=self.n)).isoformat() + '+00:00'
+    async def route(self, route):
+        req = route.request; u = urllib.parse.urlparse(req.url); q = urllib.parse.parse_qs(u.query)
+        if req.method == 'GET':
+            rows = list(self.rows.values())
+            if 'maj' in q: rows = [r for r in rows if r['maj'] >= q['maj'][0][4:]]
+            rows.sort(key=lambda r: r['maj'])
+            return await route.fulfill(status=200, content_type='application/json', body=json.dumps(rows))
+        if req.method == 'POST':
+            b = json.loads(req.post_data); b['maj'] = self.maj(); self.rows[b['path']] = b
+            return await route.fulfill(status=201, content_type='application/json', body=json.dumps([b]))
+        await route.fulfill(status=204, body='')
+
+async def ouvrir_en_ligne(nav, faux, pseudo):
+    ctx = await nav.new_context()
+    html = open(PAGE[7:], encoding='utf-8').read()
+    await ctx.route(SITE + '**', lambda r: r.fulfill(status=200, content_type='text/html', body=html))
+    await ctx.route('https://hhyudxnkuoxzrkfkjipn.supabase.co/**', faux.route)
+    page = await ctx.new_page(); err = []
+    page.on('pageerror', lambda e: err.append(str(e)))
+    await page.goto(SITE)
+    await page.wait_for_function('DICT!==null&&(screen==="pseudo"||screen==="lobby")', timeout=15000)
+    if await page.evaluate('screen') == 'pseudo':
+        await page.fill('#pi', pseudo); await page.press('#pi', 'Enter')
+        await page.wait_for_function('screen==="lobby"')
+    return ctx, page, err
+
+async def enligne(nav):
+    """GitHub Pages + Supabase : deux joueurs, présence, admin par mot de passe, partie commune et classement."""
+    faux = FauxSupa()
+    c1, a, ea = await ouvrir_en_ligne(nav, faux, 'Yvan')
+    c2, b, eb = await ouvrir_en_ligne(nav, faux, 'Lucy')
+    verif(await a.evaluate('enLigne&&!solo&&!isAdmin'), 'en ligne : salon multijoueur, pas encore admin')
+    await a.wait_for_function('lobbyPeople().length===2', timeout=12000)
+    verif(True, 'présence : chacun voit les 2 joueurs')
+    # Admin : le premier mot de passe devient celui de l'admin ; un autre est refusé
+    await a.click('#admo'); await a.fill('#admp', 'secret'); await a.press('#admp', 'Enter')
+    await a.wait_for_selector('#launch')
+    verif(await a.evaluate('isAdmin') and 'meta/admin' in faux.rows and 'secret' not in json.dumps(faux.rows), 'admin : mot de passe enregistré sous forme d’empreinte')
+    await b.click('#admo'); await b.fill('#admp', 'autre'); await b.press('#admp', 'Enter')
+    await b.wait_for_function('document.querySelector("#admm").textContent.includes("incorrect")')
+    verif(not await b.evaluate('isAdmin'), 'admin : mauvais mot de passe refusé')
+    # Lucy se déclare prête, Yvan règle (Pendu + Calcul) et lance
+    await b.click('#rdy')
+    await a.wait_for_function('lobbyPeople().some(p=>p.pseudo==="Lucy"&&p.ready)', timeout=12000)
+    verif(True, 'présence : « prêt » transmis')
+    await a.click('#reglages'); await a.wait_for_selector('#cf')
+    await a.check('#cj li[data-id="pendu"] [name=on]')
+    for i in ['wordle', 'boggle', 'semantix']: await a.uncheck(f'#cj li[data-id="{i}"] [name=on]')
+    await a.click('#cs'); await a.wait_for_function('screen==="lobby"')
+    await b.wait_for_function('cfg.jeux.join()==="calcul,pendu"', timeout=6000)
+    verif(True, 'réglages de l’admin reçus par les joueurs')
+    await a.click('#launch')
+    await a.wait_for_function('screen==="play"', timeout=6000)
+    await b.wait_for_function('screen==="play"', timeout=6000)
+    verif(await b.evaluate('round.id') == await a.evaluate('round.id'), 'lancement reçu : même partie pour les deux')
+    # Lucy réussit le calcul, puis tout le monde termine (chrono écoulé)
+    P = await b.evaluate('round.p')
+    for q in P['quiz']:
+        await b.fill('#qa', str(q['a'])); await b.press('#qa', 'Enter')
+    await b.wait_for_function('round.st.step===1', timeout=5000)
+    await a.wait_for_function('liveRows.some(r=>r.pseudo==="Lucy"&&r.total===10)', timeout=8000)
+    verif(True, 'classement en direct : score de Lucy visible chez l’admin')
+    for p in (a, b): await p.evaluate('round.st.start=Date.now()-(rc().temps+1)*1000')
+    await a.wait_for_function('history.length===1', timeout=15000)
+    h = await a.evaluate('history[0]')
+    verif(h['standings'][0]['pseudo'] == 'Lucy' and len(h['standings']) == 2, 'fin de partie : classement enregistré, Lucy 1re')
+    verif(await a.evaluate('game.status') == 'finished', 'partie close')
+    # Rechargement : l'admin le reste, l'identité est conservée
+    uid = await a.evaluate('uid'); await a.reload()
+    await a.wait_for_function('screen==="lobby"', timeout=15000)
+    verif(await a.evaluate('isAdmin') and await a.evaluate('uid') == uid, 'rechargement : même joueur, toujours admin')
+    verif(ea == [] and eb == [], 'aucune erreur JS ' + str(ea + eb))
+    await c1.close(); await c2.close()
+
+GROUPES = {'donnees': donnees, 'solo': solo, 'epreuves': epreuves, 'reglages': reglages, 'admin': admin, 'enligne': enligne, 'mobile': mobile}
 
 async def main():
     noms = sys.argv[1:] or list(GROUPES)
