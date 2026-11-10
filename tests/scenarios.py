@@ -197,6 +197,7 @@ async def reglages(nav):
     await lancer_solo(page)
     P = await page.evaluate('round.p')
     verif(await page.inner_text('.stage-head h2') == 'Pendu', 'Pendu en première épreuve')
+    verif(await page.inner_text('#game .hint') == f"{len(P['pendu'])} lettres, 7 erreurs permises.", 'Pendu : nombre de lettres affiché, sans thème')
     faute = next(ch for ch in 'ZWXKQJY' if ch not in P['pendu'].upper())
     await page.keyboard.press(faute)
     verif(await page.locator('#pg > *').count() >= 1, 'Pendu : erreur dessinée')

@@ -4,9 +4,8 @@ const PENDU_ERR=7;
 const penduPts=(pts,err)=>Math.max(1,Math.round(pts*(1-err/(PENDU_ERR*2))));
 function mountPendu(el,P,PTS){
   const T=P.pendu.toUpperCase(),KB=["AZERTYUIOP","QSDFGHJKLM","WXCVBN"];
-  const th=THEMES[LEX.get(P.pendu)?.t]?.key||"";
   let err=0,locked=false;const tried=new Set();
-  el.innerHTML=`<p class="hint">Thème : <b>${esc(LABEL[th]||th)}</b>. ${T.length} lettres, ${PENDU_ERR} erreurs permises.</p>
+  el.innerHTML=`<p class="hint">${T.length} lettres, ${PENDU_ERR} erreurs permises.</p>
   <svg class="gibet" viewBox="0 0 120 110" aria-hidden="true"><g id="pg"></g></svg>
   <div class="pmot" id="pm"></div><div class="msg" id="pmsg"></div>
   <div class="kb">${KB.map(r=>`<div class="kbrow">${[...r].map(k=>`<button class="key" data-k="${k}">${k}</button>`).join("")}</div>`).join("")}</div>`;
