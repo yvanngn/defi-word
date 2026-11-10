@@ -24,4 +24,4 @@ tests/scenarios.py    tests Playwright
 
 ## Déploiement
 `build.py` écrit aussi `index.html` à la racine (à committer). GitHub Pages (Settings > Pages : Deploy from a branch, `main`, `/`)
-le sert sur https://yvanngn.github.io/defi-word/. GitHub Actions rejoue les tests à chaque push et vérifie que `index.html` est à jour.
+le sert sur https://yvanngn.github.io/defi-word/. GitHub Actions rejoue les tests à chaque push.

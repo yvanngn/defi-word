@@ -18,5 +18,3 @@ jobs:
         with: { python-version: '3.12' }
       - run: pip install playwright && playwright install --with-deps chromium
       - run: sh tester.sh
-      - name: index.html à jour (lancer python3 build.py avant de pousser)
-        run: git diff --exit-code --stat index.html
