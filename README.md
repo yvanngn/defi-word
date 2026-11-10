@@ -20,7 +20,7 @@ tests/scenarios.py    tests Playwright
 
 ## Commandes
 - `python3 build.py` : génère `dist/index.html` (ne jamais l'éditer à la main).
-- `sh tester.sh` : build + tous les tests ; `sh tester.sh solo` pour un groupe (`donnees solo epreuves reglages admin mobile`).
+- `sh tester.sh` : build + tous les tests ; `sh tester.sh solo` pour un groupe (`donnees solo epreuves reglages admin enligne mobile`).
 
 ## Déploiement
 `build.py` écrit aussi `index.html` à la racine (à committer). GitHub Pages (Settings > Pages : Deploy from a branch, `main`, `/`)

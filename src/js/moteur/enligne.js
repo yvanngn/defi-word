@@ -2,7 +2,7 @@
 // Même interface que window.claude (db.doc / db.collection / room) pour que le reste du jeu n'y voie aucune différence.
 // Table defi_docs (path, coll, data, maj) : voir README. Temps réel par interrogation toutes les POLL_MS.
 const SUPA={url:'https://hhyudxnkuoxzrkfkjipn.supabase.co',key:'sb_publishable_buAHqM4Mu-XuRKMM8uJaNQ_PYZhJZ23',table:'defi_docs'};
-const POLL_MS=2000, PRESENCE_MS=8000, PRESENCE_TTL=25000;
+const POLL_MS=2000, RECOUVRE_MS=10000, PRESENCE_MS=8000, PRESENCE_TTL=25000;
 const supaOn=()=>!!SUPA.key&&typeof fetch==="function"&&/^https?:$/.test(location.protocol);
 const supaH=x=>({apikey:SUPA.key,"Content-Type":"application/json",...(x||{})});
 const supaUrl=q=>`${SUPA.url}/rest/v1/${SUPA.table}${q||""}`;
@@ -14,12 +14,15 @@ function supaDb(){
   let dernier="1970-01-01T00:00:00Z",horloge=0;   // dernier maj serveur vu (lecture incrémentale)
   const snap=path=>{const r=cache.get(path);return {exists:!!r,id:path.split("/").pop(),data:()=>r?cloneJ(r.data):undefined};};
   const notifier=()=>subs.forEach(f=>{try{f();}catch{}});
-  const ranger=rows=>{let chg=false;for(const r of rows){const old=cache.get(r.path);
+  // avancer=false pour nos propres écritures : une écriture d’un autre joueur peut avoir un maj plus ancien et ne pas encore être lue
+  const ranger=(rows,avancer=true)=>{let chg=false;for(const r of rows){const old=cache.get(r.path);
       if(!old||JSON.stringify(old.data)!==JSON.stringify(r.data)||old.maj!==r.maj){cache.set(r.path,{data:r.data,maj:r.maj});chg=true;}
-      if(r.maj>dernier)dernier=r.maj;const t=Date.parse(r.maj);if(t>horloge)horloge=t;}
+      if(avancer&&r.maj>dernier)dernier=r.maj;const t=Date.parse(r.maj);if(t>horloge)horloge=t;}
     return chg;};
   async function lire(){
-    const r=await fetch(supaUrl(`?select=path,data,maj&maj=gte.${encodeURIComponent(dernier)}&order=maj.asc`),{headers:supaH()});
+    // Fenêtre de recouvrement : les transactions validées un peu après leur horodatage sont relues
+    const depuis=new Date(Math.max(0,Date.parse(dernier)-RECOUVRE_MS)).toISOString();
+    const r=await fetch(supaUrl(`?select=path,data,maj&maj=gte.${encodeURIComponent(depuis)}&order=maj.asc`),{headers:supaH(),cache:"no-store"});   // même URL à chaque tour : jamais de cache
     if(!r.ok)throw new Error("Supabase "+r.status);
     if(ranger(await r.json()))notifier();
   }
@@ -28,7 +31,7 @@ function supaDb(){
     const coll=path.split("/")[0];
     const r=await fetch(supaUrl("?on_conflict=path"),{method:"POST",headers:supaH({Prefer:"resolution=merge-duplicates,return=representation"}),body:JSON.stringify({path,coll,data})});
     if(!r.ok)throw new Error("Écriture refusée ("+r.status+")");
-    ranger(await r.json());
+    ranger(await r.json(),false);
   }
   // Abonnement : rappel immédiat puis à chaque changement réel du résultat
   const abonner=(calc,cb)=>{let prev=null;const f=()=>{const v=calc(),k=JSON.stringify(v.cle);if(k!==prev){prev=k;cb(v.snap);}};subs.add(f);setTimeout(f,0);return()=>subs.delete(f);};

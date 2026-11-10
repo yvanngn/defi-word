@@ -264,12 +264,14 @@ class FauxSupa:
     def __init__(self): self.rows = {}; self.n = 0
     def maj(self):
         self.n += 1
-        return (datetime.datetime(2026, 1, 1) + datetime.timedelta(milliseconds=self.n)).isoformat() + '+00:00'
+        return (datetime.datetime(2026, 1, 1) + datetime.timedelta(milliseconds=self.n)).isoformat(timespec='milliseconds') + '+00:00'
     async def route(self, route):
         req = route.request; u = urllib.parse.urlparse(req.url); q = urllib.parse.parse_qs(u.query)
         if req.method == 'GET':
             rows = list(self.rows.values())
-            if 'maj' in q: rows = [r for r in rows if r['maj'] >= q['maj'][0][4:]]
+            if 'maj' in q:
+                d = datetime.datetime.fromisoformat(q['maj'][0][4:].replace('Z', '+00:00'))
+                rows = [r for r in rows if datetime.datetime.fromisoformat(r['maj']) >= d]
             rows.sort(key=lambda r: r['maj'])
             return await route.fulfill(status=200, content_type='application/json', body=json.dumps(rows))
         if req.method == 'POST':
@@ -331,7 +333,9 @@ async def enligne(nav):
     await a.wait_for_function('history.length===1', timeout=15000)
     h = await a.evaluate('history[0]')
     verif(h['standings'][0]['pseudo'] == 'Lucy' and len(h['standings']) == 2, 'fin de partie : classement enregistré, Lucy 1re')
-    verif(await a.evaluate('game.status') == 'finished', 'partie close')
+    await a.wait_for_function('game.status==="finished"', timeout=5000)
+    await b.wait_for_function('game.status==="finished"', timeout=6000)
+    verif(True, 'partie close, chez tous les joueurs')
     # Rechargement : l'admin le reste, l'identité est conservée
     uid = await a.evaluate('uid'); await a.reload()
     await a.wait_for_function('screen==="lobby"', timeout=15000)
