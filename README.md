@@ -23,5 +23,5 @@ tests/scenarios.py    tests Playwright
 - `sh tester.sh` : build + tous les tests ; `sh tester.sh solo` pour un groupe (`donnees solo epreuves reglages admin mobile`).
 
 ## Déploiement
-Push sur `main` → GitHub Actions : tests, puis publication de `dist/` sur GitHub Pages
-(Settings > Pages > Source : **GitHub Actions**) → https://yvanngn.github.io/defi-word/
+`build.py` écrit aussi `index.html` à la racine (à committer). GitHub Pages (Settings > Pages : Deploy from a branch, `main`, `/`)
+le sert sur https://yvanngn.github.io/defi-word/. GitHub Actions rejoue les tests à chaque push et vérifie que `index.html` est à jour.

@@ -17,4 +17,6 @@ html=lire('index.html').replace('/*@CSS*/\n',lire('css/style.css')).replace('/*@
 if '🆕' in html: raise SystemExit('Erreur : un marqueur 🆕 (relecture des dialogues) est resté dans le code. Le retirer de src/.')
 os.makedirs(os.path.join(ICI,'dist'),exist_ok=True)
 open(os.path.join(ICI,'dist','index.html'),'w',encoding='utf-8').write(html)
+# Copie à la racine : GitHub Pages (« Deploy from a branch », main, /) sert ce fichier
+open(os.path.join(ICI,'index.html'),'w',encoding='utf-8').write(html)
 print('dist/index.html : v'+VERSION+',',len(html)//1024,'Ko,',len(ordre),'fichiers JS')
