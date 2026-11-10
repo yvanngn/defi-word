@@ -1,0 +1,19 @@
+# Ordre de concaténation des scripts (build.py)
+js/reglages.js
+js/donnees/lexique.js
+js/donnees/wordle.js
+js/donnees/dictionnaire.js
+js/donnees/themes.js
+js/moteur/outils.js
+js/moteur/generation.js
+js/moteur/temperature.js
+js/moteur/etat.js
+js/moteur/connexion.js
+js/moteur/partie.js
+js/ecrans/salon.js
+js/ecrans/manche.js
+js/jeux/wordle.js
+js/jeux/boggle.js
+js/jeux/semantix.js
+js/jeux/calcul.js
+js/clavier.js

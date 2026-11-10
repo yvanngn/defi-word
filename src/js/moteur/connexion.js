@@ -1,0 +1,28 @@
+/* ================= Connexion aux capacités ================= */
+async function init(){
+  render();
+  if(!(window.claude&&window.claude.use)){offline();return;}
+  const guard=setTimeout(()=>{if(!db)offline();},10000);
+  try{
+    [db,user,room]=await Promise.all([window.claude.use("db"),window.claude.use("user"),window.claude.use("room")]);
+    clearTimeout(guard);
+    if(!db||!user){offline();return;}
+    uid=await user.id();
+    isAdmin=!!(await user.canEdit());
+    if(!uid){offline();return;}
+    try{const p=await db.doc("players/"+uid).get();if(p.exists&&p.data().pseudo){pseudo=p.data().pseudo;localStorage.setItem("defi:pseudo",pseudo);}}catch{}
+    screen=pseudo?"lobby":"pseudo";
+    render();
+    if(room){
+      room.onPeers(ch=>{peers=ch.peers;if(screen==="lobby")renderPeople();});
+      setPresence();
+    }
+    db.doc("game/current").onSnapshot(s=>onGame(s.exists?s.data():null),()=>{});
+    db.doc("stats/main").onSnapshot(s=>{stats=s.exists?s.data():null;if(screen==="lobby")renderTabs();},()=>{});
+    db.collection("games").orderBy("endedAt","desc").limit(15).onSnapshot(s=>{history=s.docs.map(d=>d.data());if(screen==="lobby")renderTabs();},()=>{});
+    if(isAdmin)db.doc("meta/used").onSnapshot(s=>{usedMeta=s.exists?s.data():null;if(screen==="lobby")renderAdminInfo();},()=>{});
+  }catch{clearTimeout(guard);offline();}
+}
+function offline(){db=null;solo=true;screen="offline";render();}
+function setPresence(){if(room&&pseudo)room.presence({pseudo,ready,state:screen==="play"?"play":"lobby"}).catch(()=>{});}
+
