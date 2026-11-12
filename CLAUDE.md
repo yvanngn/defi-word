@@ -23,3 +23,6 @@ Exception : si l'utilisateur écrit « force », exécuter quand même.
 - Toute fonctionnalité ou correction = un test dans `tests/scenarios.py` (table `GROUPES`).
 - Republier : `dist/index.html` sur la page Artifact existante (même `url`), et push sur `main` pour GitHub Pages.
 - Le multijoueur passe par `window.claude` (db, user, room) : il n'existe que sur claude.ai ; ailleurs, Supabase (`moteur/enligne.js`, table `defi_docs`, voir README) ; sans réseau, mode solo.
+
+## Interface (skill `interface-jeu`)
+- Clic droit : jamais le menu du navigateur dans le jeu (écouteur `contextmenu` sur `#app`, dans `src/js/clavier.js`), sauf dans les champs de saisie. Testé dans le groupe du menu.

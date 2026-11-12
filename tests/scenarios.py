@@ -166,6 +166,7 @@ localStorage.setItem('defi:pseudo','Yvan');})()"""
 async def reglages(nav):
     """Écran de réglages en solo : choix, ordre, points, temps, bonus ; épreuve du Pendu."""
     ctx, page, err = await ouvrir(nav)
+    verif(await page.evaluate('()=>'+"(()=>{ const els=[...document.querySelectorAll('#app, #app button, #app div')].slice(0,60); return els.length>1&&els.every(el=>{ const e=new MouseEvent('contextmenu',{bubbles:true,cancelable:true}); el.dispatchEvent(e); return e.defaultPrevented; }); })()"), 'clic droit : jamais le menu du navigateur')
     r = await page.evaluate('()=>{const c=cfgNorm({jeux:["pendu","zzz","pendu"],temps:5,pts:{wordle:999},bonusPas:0});return [c.jeux.join(),c.temps,c.pts.wordle,c.bonusPas]}')
     verif(r == ['pendu', 30, 100, 1], 'réglages : valeurs bornées et jeux inconnus ignorés ' + str(r))
     await page.click('#reglages')
