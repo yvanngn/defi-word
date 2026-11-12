@@ -40,3 +40,11 @@ description: Règles d’interface et de style communes aux jeux point and click
 - À l'arrêt, le personnage est dessiné **de face**. Dès qu'il marche, il passe **de profil**, tourné dans le sens de la marche (miroir horizontal `scale(-1,1)` vers la gauche), avec une animation de marche (jambes qui alternent sur 4 étapes, bras qui balance).
 - Dans le moteur du Vietnam : `drawFront` à l'arrêt, `drawSide(spec, frame, opt)` en marche, `a.dir` pour le sens. Tout nouveau personnage jouable ou PNJ qui se déplace a une vue de profil.
 - Test : faire marcher le héros vers la gauche puis la droite et vérifier que la vue de profil est utilisée et le sens retourné.
+
+## Deux modes graphiques : toujours dessiner pour les deux
+- Un jeu qui a des graphismes « classiques » et « améliorés » (Un Noël au Vietnam : Paramètres → Graphismes) doit avoir **chaque nouveauté dans les deux modes** : nouveau personnage, décor, objet, élément posé devant les personnages, icône, mini-jeu.
+- Concrètement dans Un Noël au Vietnam :
+  - personnage : une entrée `SPECS` (rendu classique) **et**, pour un membre de la famille, son entrée `HD_FAMILLE` (visage, coiffure, vêtements, `sprites_hd.js`) ; un figurant copié d'un membre de la famille prend `hd:null` ;
+  - décor : la fonction `drawX` sert aux deux modes (le mode amélioré la retraite avec `decorHD`) ; tout élément dessiné dans `renderX` devant les personnages (table, comptoir, couette…) passe par `devantHD('cle',()=>…)` ;
+  - icône d'inventaire : dessinée une fois (16×16), le mode amélioré ajoute contour et reflet (`iconeClaire`).
+- Vérifier les deux modes avant de livrer : capture en « Classiques » et en « Améliorés » (`localStorage nv_gfx` = `classique` / `hd`) pour tout nouveau décor, et tests du chapitre dans le mode par défaut (améliorés).
