@@ -26,3 +26,6 @@ Exception : si l'utilisateur écrit « force », exécuter quand même.
 
 ## Interface (skill `interface-jeu`)
 - Clic droit : jamais le menu du navigateur dans le jeu (écouteur `contextmenu` sur `#app`, dans `src/js/clavier.js`), sauf dans les champs de saisie. Testé dans le groupe du menu.
+
+## Mémoire du projet
+- `docs/CARNET.md` : histoire, personnages, chapitres, inventaires, contradictions, idées. Le lire en début de séance, le compléter à la fin (skill `carnet-de-projet`).
